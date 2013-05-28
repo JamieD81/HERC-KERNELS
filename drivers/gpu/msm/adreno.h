@@ -116,6 +116,7 @@ struct adreno_device {
 	struct ocmem_buf *ocmem_hdl;
 	unsigned int ocmem_base;
 #endif
+	unsigned int gpu_cycles;
 };
 
 struct adreno_gpudev {
