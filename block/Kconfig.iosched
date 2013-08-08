@@ -71,23 +71,6 @@ config IOSCHED_SIO
     basic merging, trying to keep a minimum overhead. It is aimed
     mainly for aleatory access devices (eg: flash devices).
 
-config IOSCHED_ZEN
-	tristate "Zen I/O scheduler"
-	default y
-	---help---
-	  FCFS, dispatches are back-inserted, deadlines ensure fairness.
-	  Should work best with devices where there is no travel delay.
-	  Enable group IO scheduling in CFQ.
-
-config IOSCHED_AS
-	tristate "Anticipatory I/O scheduler"
-	default y
-	---help---
-	  The anticipatory I/O scheduler is generally a good choice for most
-	  environments, but is quite large and complex when compared to the
-	  deadline I/O scheduler, it can also be slower in some cases
-	  especially some database loads.
-
 config IOSCHED_BFQ
 	tristate "BFQ I/O scheduler"
 	depends on EXPERIMENTAL
@@ -109,6 +92,23 @@ config CGROUP_BFQIO
 	  Enable hierarchical scheduling in BFQ, using the cgroups
 	  filesystem interface.  The name of the subsystem will be
 	  bfqio.
+
+config IOSCHED_ZEN
+	tristate "Zen I/O scheduler"
+	default y
+	---help---
+	  FCFS, dispatches are back-inserted, deadlines ensure fairness.
+	  Should work best with devices where there is no travel delay.
+	  Enable group IO scheduling in CFQ.
+
+config IOSCHED_AS
+	tristate "Anticipatory I/O scheduler"
+	default y
+	---help---
+	  The anticipatory I/O scheduler is generally a good choice for most
+	  environments, but is quite large and complex when compared to the
+	  deadline I/O scheduler, it can also be slower in some cases
+	  especially some database loads.
 
 choice
 	prompt "Default I/O scheduler"
@@ -133,9 +133,6 @@ choice
 	config DEFAULT_CFQ
 		bool "CFQ" if IOSCHED_CFQ=y
 
-	config DEFAULT_BFQ
-		bool "BFQ" if IOSCHED_BFQ=y
-
 	config DEFAULT_NOOP
 		bool "No-op"
 
@@ -144,6 +141,9 @@ choice
 
 	config DEFAULT_VR
 		bool "V(R)" if IOSCHED_VR=y  
+
+	config DEFAULT_BFQ
+		bool "BFQ" if IOSCHED_BFQ=y
 
 	config DEFAULT_ZEN
 		bool "ZEN" if IOSCHED_ZEN=y
@@ -157,9 +157,8 @@ config DEFAULT_IOSCHED
 	string
 	default "deadline" if DEFAULT_DEADLINE
 	default "row" if DEFAULT_ROW
-	default "anticipatory" if DEFAULT_AS
-	default "cfq" if DEFAULT_CFQ
 	default "bfq" if DEFAULT_BFQ
+	default "cfq" if DEFAULT_CFQ
 	default "noop" if DEFAULT_NOOP
 	default "sio" if DEFAULT_SIO
 	default "vr" if DEFAULT_VR
