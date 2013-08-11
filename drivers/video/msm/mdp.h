@@ -733,6 +733,7 @@ extern struct mdp_hist_mgmt *mdp_hist_mgmt_array[];
 
 void mdp_hw_init(void);
 int mdp_ppp_pipe_wait(void);
+void mdp_pipe_kickoff_simplified(uint32 term);
 void mdp_pipe_kickoff(uint32 term, struct msm_fb_data_type *mfd);
 void mdp_clk_ctrl(int on);
 void mdp_pipe_ctrl(MDP_BLOCK_TYPE block, MDP_BLOCK_POWER_STATE state,
@@ -918,7 +919,15 @@ static inline void mdp4_iommu_detach(void)
 }
 #endif
 
+#ifdef CONFIG_FB_MSM_DTV
 void mdp_vid_quant_set(void);
+#else
+static inline void mdp_vid_quant_set(void)
+{
+	/* empty */
+}
+#endif
+
 #ifndef CONFIG_FB_MSM_MDP40
 static inline int msmfb_overlay_vsync_ctrl(struct fb_info *info,
 						void __user *argp)
