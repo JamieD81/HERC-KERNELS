@@ -41,6 +41,8 @@
 #include <linux/i2c/isa1200.h>
 #include <linux/dma-mapping.h>
 #include <linux/i2c/bq27520.h>
+#include <linux/fastchg.h>
+#include <linux/msm_tsens.h>
 
 #if defined(CONFIG_TOUCHSCREEN_ATMEL_MXT540E)
 #include <linux/i2c/mxt540e_q1.h>
@@ -188,6 +190,17 @@ static struct wacom_g5_callbacks *wacom_callbacks;
 #if !defined(CONFIG_JPN_MODEL_SC_05D)	
 #include <linux/video/sec_mipi_lcd_esd_refresh.h>
 #endif
+#endif
+
+#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
+	int set_two_phase_freq(int cpufreq);
+#endif 
+
+#ifdef CONFIG_CPU_FREQ_GOV_BADASS_2_PHASE
+	int set_two_phase_freq_badass(int cpufreq);
+#endif
+#ifdef CONFIG_CPU_FREQ_GOV_BADASS_3_PHASE
+	int set_three_phase_freq_badass(int cpufreq);
 #endif
 
 #define MSM_SHARED_RAM_PHYS 0x40000000
@@ -5009,9 +5022,20 @@ static void fsa9480_usb_cb(bool attached)
 
 #ifdef CONFIG_BATTERY_SEC
 	switch(set_cable_status) {
+#ifdef CONFIG_FORCE_FAST_CHARGE
+		case CABLE_TYPE_USB:
+	if (force_fast_charge != 0) {
+			value.intval = POWER_SUPPLY_TYPE_MAINS;
+			printk(KERN_ERR "fast charce is enabled, value: %d\n", force_fast_charge);
+	} else {
+			value.intval = POWER_SUPPLY_TYPE_USB;
+	}
+			break;
+#else 
 		case CABLE_TYPE_USB:
 			value.intval = POWER_SUPPLY_TYPE_USB;
 			break;
+#endif
 		case CABLE_TYPE_NONE:
 			value.intval = POWER_SUPPLY_TYPE_BATTERY;
 			break;
@@ -8584,6 +8608,13 @@ static struct platform_device *early_devices[] __initdata = {
 	&msm_device_dmov_adm1,
 };
 
+static struct tsens_platform_data her_tsens_pdata = {
+	.tsens_factor = 1000,
+	.hw_type = MSM_8660,
+	.tsens_num_sensor = 6,
+	.slope = {702},
+};
+
 #if 0 //(defined(CONFIG_MARIMBA_CORE)) && (defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
 
 static int bluetooth_power(int);
@@ -8603,11 +8634,12 @@ static struct platform_device bcm4330_bluetooth_device = {
 	.id = -1,
 };
 #endif
-
+/*
 static struct platform_device msm_tsens_device = {
 	.name   = "tsens-tm",
 	.id = -1,
 };
+*/
 
 #ifdef CONFIG_VP_A2220
 extern int a2220_ctrl(unsigned int cmd , unsigned long arg);
@@ -9879,7 +9911,7 @@ static struct platform_device *surf_devices[] __initdata = {
 	&msm_device_rng,
 #endif
 
-	&msm_tsens_device,
+	//&msm_tsens_device,
 	&msm_rpm_device,
 #ifdef CONFIG_ION_MSM
 	&ion_dev,
@@ -12009,6 +12041,8 @@ vreg_fail:
 #ifdef CONFIG_VP_A2220
 void __ref init_a2220(void)
 {
+
+
 #ifdef CONFIG_BATTERY_SEC
 	if(is_lpm_boot)
 		return ;
@@ -17288,6 +17322,9 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	 * Initialize RPM first as other drivers and devices may need
 	 * it for their initialization.
 	 */
+
+	msm_tsens_early_init(&her_tsens_pdata);
+
 #ifdef CONFIG_MSM_RPM
 	BUG_ON(msm_rpm_init(&msm_rpm_data));
 #endif
